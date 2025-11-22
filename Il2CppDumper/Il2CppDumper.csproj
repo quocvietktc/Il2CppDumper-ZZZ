@@ -8,9 +8,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     
     <PublishAot>true</PublishAot>
-    
     <IlcAlignment>64</IlcAlignment> 
-    
     <StripSymbols>true</StripSymbols>
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
