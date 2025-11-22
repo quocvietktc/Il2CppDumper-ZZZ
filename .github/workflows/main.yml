@@ -1,18 +1,36 @@
 name: Build Android Dumper
 on: [push]
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    
     steps:
-    - uses: actions/checkout@v3
-    - name: Setup .NET
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Setup .NET 9
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 9.0.x
-    - name: Install dependencies
-      run: sudo apt-get install -y clang zlib1g-dev
-    - name: Build
-      run: dotnet publish -c Release -r linux-arm64 -f net9.0 /p:PublishAot=true /p:IlcAlignment=64 /p:StripSymbols=true -o output
+
+    - name: Install Dependencies (Cross-Compiler)
+      run: |
+        sudo apt-get update
+        # Cài đặt bộ biên dịch cho chip ARM64 và thư viện zlib
+        sudo apt-get install -y clang zlib1g-dev gcc-aarch64-linux-gnu
+
+    - name: Build & Publish
+      # Thêm tham số Linker để chỉ định dùng gcc-aarch64
+      run: |
+        dotnet publish Il2CppDumper/Il2CppDumper.csproj \
+        -c Release \
+        -r linux-arm64 \
+        -f net9.0 \
+        /p:CppCompilerAndLinker=aarch64-linux-gnu-gcc \
+        /p:SysRoot=/usr/aarch64-linux-gnu \
+        -o output
+
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
