@@ -8,8 +8,14 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     
     <PublishAot>true</PublishAot>
-    <IlcAlignment>64</IlcAlignment> <StripSymbols>true</StripSymbols>
+    <IlcAlignment>64</IlcAlignment> 
+    <StripSymbols>true</StripSymbols>
+    <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+  </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net472|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
