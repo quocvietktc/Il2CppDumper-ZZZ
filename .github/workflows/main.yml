@@ -1,0 +1,20 @@
+name: Build Android Dumper
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 9.0.x
+    - name: Install dependencies
+      run: sudo apt-get install -y clang zlib1g-dev
+    - name: Build
+      run: dotnet publish -c Release -r linux-arm64 -f net9.0 /p:PublishAot=true /p:IlcAlignment=64 /p:StripSymbols=true -o output
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: dumper-android
+        path: output/Il2CppDumper
