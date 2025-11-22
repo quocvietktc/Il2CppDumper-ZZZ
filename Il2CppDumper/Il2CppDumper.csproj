@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-<PropertyGroup>
+PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -8,15 +8,20 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     
     <PublishAot>true</PublishAot>
-    <IlcAlignment>64</IlcAlignment> 
+    
     <StripSymbols>true</StripSymbols>
     <InvariantGlobalization>true</InvariantGlobalization>
+    <StackTraceSupport>false</StackTraceSupport>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <LinkerArg Include="-Wl,-z,max-page-size=65536" />
+    <LinkerArg Include="-Wl,-z,common-page-size=65536" />
+  </ItemGroup>
   
 
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net472|AnyCPU'">
