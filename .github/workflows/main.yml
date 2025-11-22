@@ -10,22 +10,28 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
+    # 1. Cài đặt QEMU để giả lập chip ARM64
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
 
+    # 2. Chạy Build trong Docker
     - name: Build inside ARM64 Docker
       uses: addnab/docker-run-action@v3
       with:
-        image: mcr.microsoft.com/dotnet/sdk:9.0-bookworm-arm64v8
+        # SỬA LỖI Ở ĐÂY: Dùng tag chuẩn '9.0'
+        image: mcr.microsoft.com/dotnet/sdk:9.0
+        
+        # Chỉ định platform để Docker tự tải bản ARM64 về
         options: --platform linux/arm64 -v ${{ github.workspace }}:/work -w /work/Il2CppDumper
+        
         run: |
-          echo "--- Cài đặt Clang/Zlib ---"
+          echo "--- Cài đặt thư viện C++ ---"
           apt-get update && apt-get install -y clang zlib1g-dev
           
           echo "--- Build Native AOT (Với Linker Args Fix) ---"
-          # Lưu ý: Dùng linux-arm64 chuẩn, không dùng bionic nữa
           dotnet publish -c Release -r linux-arm64 -o /work/output
 
+    # 3. Tải file kết quả
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
