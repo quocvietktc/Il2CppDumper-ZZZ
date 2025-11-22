@@ -1,4 +1,4 @@
-name: Build NativeAOT Android
+name: Build ARM64 AOT
 
 on: [push, workflow_dispatch]
 
@@ -8,30 +8,28 @@ jobs:
     
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
-    # 1. Cài đặt trình giả lập QEMU (Để chạy được môi trường chip điện thoại trên Server)
+    # 1. Cài đặt QEMU (Bộ giả lập chip điện thoại)
     - name: Set up QEMU
-      uses: docker/setup-qemu-action@v2
+      uses: docker/setup-qemu-action@v3
 
-    # 2. Build bên trong Docker Container (Môi trường ARM64 chuẩn của Microsoft)
-    - name: Build inside Docker
-      run: |
-        # Chạy container .NET 9 trên nền tảng linux/arm64
-        docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-        
-        docker run --rm --platform linux/arm64 \
-        -v ${{ github.workspace }}:/src \
-        -w /src/Il2CppDumper \
-        mcr.microsoft.com/dotnet/sdk:9.0-bookworm-arm64v8 \
-        /bin/bash -c "
-            echo '--- Installing Dependencies ---' && \
-            apt-get update && \
-            apt-get install -y clang zlib1g-dev && \
-            
-            echo '--- Building Native AOT ---' && \
-            dotnet publish -c Release -r linux-arm64 -f net9.0 -o /src/output
-        "
+    # 2. CHẠY BUILD TRONG DOCKER (Dùng Action chuyên dụng)
+    - name: Build inside ARM64 Container
+      uses: addnab/docker-run-action@v3
+      with:
+        # Dùng ảnh .NET 9 chính chủ
+        image: mcr.microsoft.com/dotnet/sdk:9.0
+        # Giả lập hệ điều hành Linux ARM64
+        options: --platform linux/arm64 -v ${{ github.workspace }}:/work -w /work/Il2CppDumper
+        # Các lệnh chạy bên trong container
+        run: |
+          echo "--- Cài đặt thư viện C++ ---"
+          apt-get update
+          apt-get install -y clang zlib1g-dev
+          
+          echo "--- Bắt đầu Build Native AOT ---"
+          dotnet publish -c Release -r linux-arm64 -o /work/output
 
     # 3. Tải file kết quả về
     - name: Upload Artifact
