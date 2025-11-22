@@ -1,40 +1,31 @@
-name: Build Android Bionic AOT
+name: Build Fixed AOT
 
 on: [push, workflow_dispatch]
 
 jobs:
-  build-bionic:
+  build-docker:
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
-    - name: Setup .NET 9
-      uses: actions/setup-dotnet@v4
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Build inside ARM64 Docker
+      uses: addnab/docker-run-action@v3
       with:
-        dotnet-version: 9.0.x
+        image: mcr.microsoft.com/dotnet/sdk:9.0-bookworm-arm64v8
+        options: --platform linux/arm64 -v ${{ github.workspace }}:/work -w /work/Il2CppDumper
+        run: |
+          echo "--- Cài đặt Clang/Zlib ---"
+          apt-get update && apt-get install -y clang zlib1g-dev
+          
+          echo "--- Build Native AOT (Với Linker Args Fix) ---"
+          # Lưu ý: Dùng linux-arm64 chuẩn, không dùng bionic nữa
+          dotnet publish -c Release -r linux-arm64 -o /work/output
 
-    # Cài đặt công cụ biên dịch
-    - name: Install Dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y clang zlib1g-dev
-
-    # QUAN TRỌNG: Build cho target 'linux-bionic-arm64'
-    # Target này sử dụng thư viện Bionic của Android thay vì Glibc của Linux
-    # Nó sẽ tự động căn chỉnh bộ nhớ (Alignment) chính xác.
-    - name: Build Native AOT
-      run: |
-        # Tìm đường dẫn NDK có sẵn trên GitHub Runner
-        export ANDROID_NDK_HOME=$ANDROID_NDK_LATEST_HOME
-        
-        dotnet publish Il2CppDumper/Il2CppDumper.csproj \
-        -c Release \
-        -r linux-bionic-arm64 \
-        -f net9.0 \
-        -o output
-
-    # Tải file kết quả
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
