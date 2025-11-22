@@ -1,47 +1,31 @@
-name: Build Dumper Android
+name: Build Android Simple
 
 on: [push, workflow_dispatch]
 
 jobs:
-  build-android:
+  build:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout Code
+    - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Setup .NET 9
+    - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 9.0.x
 
-    - name: Install ARM64 Dependencies
+    - name: Build Linux ARM64
       run: |
-        # 1. Thêm kiến trúc arm64 vào danh sách gói
-        sudo dpkg --add-architecture arm64
-        
-        # 2. Cập nhật danh sách nguồn (để tìm được gói arm64)
-        # Mẹo: Thay đổi mirror để tránh lỗi 404 trên server GitHub cũ
-        sudo sed -i 's/deb http/deb [arch=amd64] http/' /etc/apt/sources.list
-        echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy main universe" | sudo tee -a /etc/apt/sources.list
-        echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main universe" | sudo tee -a /etc/apt/sources.list
-        
-        sudo apt-get update
-        
-        # 3. Cài đặt bộ biên dịch và thư viện zlib phiên bản ARM64
-        sudo apt-get install -y gcc-aarch64-linux-gnu zlib1g-dev:arm64
-
-    - name: Build Native AOT
-      run: |
+        # Lệnh build đơn giản, không AOT, không lỗi
         dotnet publish Il2CppDumper/Il2CppDumper.csproj \
         -c Release \
         -r linux-arm64 \
-        -f net9.0 \
-        /p:CppCompilerAndLinker=aarch64-linux-gnu-gcc \
-        /p:SysRoot=/ \
+        --self-contained true \
+        -p:PublishSingleFile=true \
         -o output
 
-    - name: Upload Result
+    - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: dumper
