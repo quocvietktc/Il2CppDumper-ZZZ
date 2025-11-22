@@ -1,8 +1,9 @@
-name: Build Android Dumper
-on: [push]
+name: Build Dumper Android
+
+on: [push, workflow_dispatch]
 
 jobs:
-  build:
+  build-android:
     runs-on: ubuntu-latest
     
     steps:
@@ -14,25 +15,34 @@ jobs:
       with:
         dotnet-version: 9.0.x
 
-    - name: Install Dependencies (Cross-Compiler)
+    - name: Install ARM64 Dependencies
       run: |
+        # 1. Thêm kiến trúc arm64 vào danh sách gói
+        sudo dpkg --add-architecture arm64
+        
+        # 2. Cập nhật danh sách nguồn (để tìm được gói arm64)
+        # Mẹo: Thay đổi mirror để tránh lỗi 404 trên server GitHub cũ
+        sudo sed -i 's/deb http/deb [arch=amd64] http/' /etc/apt/sources.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy main universe" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main universe" | sudo tee -a /etc/apt/sources.list
+        
         sudo apt-get update
-        # Cài đặt bộ biên dịch cho chip ARM64 và thư viện zlib
-        sudo apt-get install -y clang zlib1g-dev gcc-aarch64-linux-gnu
+        
+        # 3. Cài đặt bộ biên dịch và thư viện zlib phiên bản ARM64
+        sudo apt-get install -y gcc-aarch64-linux-gnu zlib1g-dev:arm64
 
-    - name: Build & Publish
-      # Thêm tham số Linker để chỉ định dùng gcc-aarch64
+    - name: Build Native AOT
       run: |
         dotnet publish Il2CppDumper/Il2CppDumper.csproj \
         -c Release \
         -r linux-arm64 \
         -f net9.0 \
         /p:CppCompilerAndLinker=aarch64-linux-gnu-gcc \
-        /p:SysRoot=/usr/aarch64-linux-gnu \
+        /p:SysRoot=/ \
         -o output
 
-    - name: Upload Artifact
+    - name: Upload Result
       uses: actions/upload-artifact@v4
       with:
-        name: dumper-android
+        name: dumper
         path: output/Il2CppDumper
